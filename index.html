@@ -31,8 +31,9 @@
 
 			for (let i = 0; i < playlists.length; i++) {
 				let playlist = playlists[i];
+				let displayName = playlist.replace("/", "\\").replace("E:\\dokumentumok\\Zene", "")
 				let currId = `playlist_${i}`;
-				$list.append(`<div id=${currId}><button>${playlist}</button></div>`)
+				$list.append(`<div id=${currId}><button>${displayName}</button></div>`)
 				$(`#${currId} > button`).click(() => {
 					currSongIndex = undefined;
 					currPlaylistIndex = i;
@@ -41,6 +42,11 @@
 			}
 		});
 	</script>
+	<style>
+		button {
+			text-align: left;
+		}
+	</style>
 </head>
 
 <body>
