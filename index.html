@@ -12,45 +12,99 @@
 		$(async () => {
 			let $list = $("#list");
 			let $audio = $("audio");
+			let $nextButton = $("#nextButton");
+			let $prevButton = $("#prevButton");
+			let $filter = $("#filterInput");
+			let $randomCheckbox = $("#random");
+			let randomSeed = undefined;
 			let playlists = await new Promise(resolve => { $.getJSON("/playlists", data => resolve(data)); });
 			let currPlaylistIndex = undefined;
 			let currSongIndex = undefined;
 
-			function playNext() {
-				if(currPlaylistIndex !== undefined) {
-					if(currSongIndex === undefined) {
-						currSongIndex = -1;
+			function playPrevious() {
+				if (currPlaylistIndex !== undefined) {
+					if (!currSongIndex) {
+						currSongIndex = 1;
 					}
-					currSongIndex++;
-					$audio.attr("src", `/playlists/${currPlaylistIndex}/file/${currSongIndex}`);
+					currSongIndex--;
+					$audio.attr("src", `/playlists/${currPlaylistIndex}/file/${currSongIndex}?rand=${randomSeed || ""}`);
 					$audio[0].play();
 				}
 			}
 
-			$audio.on("ended", () => playNext());
-
-			for (let i = 0; i < playlists.length; i++) {
-				let playlist = playlists[i];
-				let displayName = playlist.replace("/", "\\").replace("E:\\dokumentumok\\Zene", "")
-				let currId = `playlist_${i}`;
-				$list.append(`<div id=${currId}><button>${displayName}</button></div>`)
-				$(`#${currId} > button`).click(() => {
-					currSongIndex = undefined;
-					currPlaylistIndex = i;
-					playNext();
-				});
+			function playNext() {
+				if (currPlaylistIndex !== undefined) {
+					if (currSongIndex === undefined) {
+						currSongIndex = -1;
+					}
+					currSongIndex++;
+					$audio.attr("src", `/playlists/${currPlaylistIndex}/file/${currSongIndex}?rand=${randomSeed || ""}`);
+					$audio[0].play();
+				}
 			}
+
+			function render() {
+				$list.empty();
+				let filterValue = $filter.val();
+				for (let i = 0; i < playlists.length; i++) {
+					let playlist = playlists[i];
+					if (filterValue && !playlist.toLowerCase().includes(filterValue.toLowerCase())) {
+						continue;
+					}
+					let displayName = playlist.replace("/", "\\").replace("E:\\dokumentumok\\Zene", "")
+					let currId = `playlist_${i}`;
+					$list.append(`<div id=${currId}><button>${displayName}</button></div>`)
+					$(`#${currId} > button`).click(() => {
+						currSongIndex = undefined;
+						currPlaylistIndex = i;
+						playNext();
+					});
+				}
+			}
+
+			function updateRandom() {
+				let isRandom = $randomCheckbox.is(":checked");
+				randomSeed = isRandom
+					? (Math.random() * 10000).toString()
+					: undefined;
+			}
+
+			$audio.on("ended", () => playNext());
+			$prevButton.click(() => playPrevious());
+			$nextButton.click(() => playNext());
+			$filter.on("input", () => render());
+			$randomCheckbox.on("click", () => updateRandom());
+
+			updateRandom();
+			render();
 		});
 	</script>
 	<style>
 		button {
 			text-align: left;
 		}
+
+		#filterInput {
+			display: block;
+		}
+
+		.player {
+			display: flex;
+		}
 	</style>
 </head>
 
 <body>
-	<audio autoplay controls src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"></audio>
+	<input id="filterInput">
+	<div>
+		<input type="checkbox" id="random" name="random" checked>
+		<label for="random">random</label>
+	</div>
+	<div class="player">
+		<button id="prevButton">&lt;</button>
+		<audio autoplay controls src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"></audio>
+		<button id="nextButton">&gt;</button>
+	</div>
 	<div id="list"></div>
 </body>
 

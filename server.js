@@ -33,6 +33,25 @@ function* getPlaylists() {
 	}
 }
 
+function shuffle(array, seed) {
+	let rand = require("random-seed").create(seed.toString());
+	let currentIndex = array.length;
+
+	// While there remain elements to shuffle...
+	while (currentIndex != 0) {
+  
+	  // Pick a remaining element...
+	  let randomIndex = Math.floor(rand.random() * currentIndex);
+	  currentIndex--;
+  
+	  // And swap it with the current element.
+	  [array[currentIndex], array[randomIndex]] = [
+		array[randomIndex], array[currentIndex]];
+	}
+  
+	return array;
+}
+
 let playlists = [...getPlaylists()];
 
 const port = 3000;
@@ -46,12 +65,17 @@ app.get("/playlists/:pid/file/:fileOrdinal", (req, res) => {
 	let playlist = playlists[req.params.pid];
 	if (playlist) {
 		let files = readPlaylist(playlist);
+		let seed = req.query["rand"];
+		if(seed) {
+			files = shuffle(files, seed);
+		}
 		let file = files[req.params.fileOrdinal];
 		if (file) {
 			if (!path.isAbsolute(file)) {
 				let basePath = path.dirname(playlist);
 				file = path.join(basePath, file);
 			}
+			file = decodeURI(file);
 
 			res.sendFile(file);
 		}
