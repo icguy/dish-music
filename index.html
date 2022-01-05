@@ -57,6 +57,7 @@
 					$(`#${currId} > button`).click(() => {
 						currSongIndex = undefined;
 						currPlaylistIndex = i;
+						updateRandom();
 						playNext();
 					});
 				}
